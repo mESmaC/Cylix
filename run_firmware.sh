@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# Path to your firmware file
 FIRMWARE="build/bin/firmware"
 
-# Run QEMU with the firmware
+
 qemu-system-i386 \
     -machine type=q35 \
     -cpu qemu32 \
@@ -13,5 +12,5 @@ qemu-system-i386 \
     -D qemu.log \
     -enable-kvm
 
-# Clean up
+
 rm -f qemu.log#!/bin/bash

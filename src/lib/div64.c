@@ -4,7 +4,7 @@ uint64_t __udivdi3(uint64_t num, uint64_t den) {
     uint64_t quot = 0, qbit = 1;
 
     if (den == 0) {
-        return 0xFFFFFFFFFFFFFFFFULL; // Divide by zero error
+        return 0xFFFFFFFFFFFFFFFFULL; 
     }
 
     while ((int64_t)den >= 0) {

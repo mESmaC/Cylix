@@ -21,5 +21,5 @@ uint64_t Timer::getTicks() {
 
 uint64_t Timer::getTicksPerMs() {
     // This is a rough estimate and may need calibration
-    return 1000000; // Assume 1 GHz processor
+    return 1000000; 
 }
