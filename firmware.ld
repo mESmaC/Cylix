@@ -1,37 +1,32 @@
-MEMORY
-{
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 1M
-    RAM (rwx)  : ORIGIN = 0x20000000, LENGTH = 128K
-}
+ENTRY(_start)
 
 SECTIONS
 {
-    .text :
-    {
-        KEEP(*(.isr_vector))
-        *(.text*)
-        *(.rodata*)
-        . = ALIGN(4);
-        _etext = .;
-    } > FLASH
+    . = 1M;
 
-    .data :
+    .multiboot ALIGN(4K) :
     {
-        _sdata = .;
-        *(.data*)
-        . = ALIGN(4);
-        _edata = .;
-    } > RAM AT > FLASH
+        *(.multiboot)
+    }
 
-    .bss :
+    .text ALIGN(4K) :
     {
-        _sbss = .;
-        *(.bss*)
+        *(.text)
+    }
+
+    .rodata ALIGN(4K) :
+    {
+        *(.rodata)
+    }
+
+    .data ALIGN(4K) :
+    {
+        *(.data)
+    }
+
+    .bss ALIGN(4K) :
+    {
         *(COMMON)
-        . = ALIGN(4);
-        _ebss = .;
-    } > RAM
-
-    . = ALIGN(4);
-    end = .;
+        *(.bss)
+    }
 }
