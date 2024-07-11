@@ -17,8 +17,8 @@ OBJ_DIR = $(BUILD_DIR)/obj
 BIN_DIR = $(BUILD_DIR)/bin
 
 # Source files
-C_SRCS = $(wildcard $(SRC_DIR)/*.c)
-CXX_SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+C_SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/**/*.c) $(SRC_DIR)/lib/div64.c
+CXX_SRCS = $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/**/*.cpp)
 ASM_SRCS = $(wildcard $(SRC_DIR)/boot/*.s)
 
 # Object files
@@ -57,14 +57,5 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 clean:
 	rm -rf $(BUILD_DIR)
 
-# Run in QEMU
-run: $(TARGET)
-	qemu-system-i386 -kernel $(TARGET)
-
-# Debug with GDB
-debug: $(TARGET)
-	qemu-system-i386 -kernel $(TARGET) -s -S &
-	gdb -ex "target remote localhost:1234" -ex "symbol-file $(TARGET)"
-
 # Phony targets
-.PHONY: all clean run debug
+.PHONY: all clean
