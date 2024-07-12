@@ -3,7 +3,7 @@
 
 const int SCREEN_WIDTH = 80;
 const int SCREEN_HEIGHT = 25;
-const uint64_t FRAME_TIME = 1000 / 60; 
+const uint64_t FRAME_TIME = 0; 
 
 uint16_t* const VGA_BUFFER = (uint16_t*)0xB8000;
 
