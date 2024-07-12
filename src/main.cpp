@@ -1,5 +1,6 @@
 #include <cstdint>
 #include "lib/timer.h"
+#include "lib/window_manager.h"
 
 const int SCREEN_WIDTH = 80;
 const int SCREEN_HEIGHT = 25;
@@ -64,7 +65,11 @@ public:
 class GUI {
 public:
     static void run() {
-        Display::write_string("GUI not implemented yet", 0, SCREEN_HEIGHT - 1);
+        WindowManager windowManager;
+        windowManager.init();
+
+        windowManager.run();
+
     }
 };
 
@@ -80,7 +85,7 @@ private:
     Timer timer;
 
 public:
-    System() : current_mode(Mode::LOGO) {}
+    System() : current_mode(Mode::GUI) {}
 
     void update() {
         Display::clear_screen();
