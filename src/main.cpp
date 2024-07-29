@@ -1,125 +1,89 @@
-#include <cstdint>
+#include "lib/display.h"
+#include "lib/shell.h"
 #include "lib/timer.h"
 #include "lib/window_manager.h"
+#include <cstdint>
 
-const int SCREEN_WIDTH = 80;
-const int SCREEN_HEIGHT = 25;
-const uint64_t FRAME_TIME = 0; 
-
-uint16_t* const VGA_BUFFER = (uint16_t*)0xB8000;
-
-const char* CYLIX_LOGO[] = {
-    "  /$$$$$$            /$$ /$$          ",
-    " /$$__  $$          | $$|__/          ",
-    "| $$  \\__/ /$$   /$$| $$ /$$ /$$   /$$",
-    "| $$      | $$  | $$| $$| $$|  $$ /$$/",
-    "| $$      | $$  | $$| $$| $$ \\  $$$$/ ",
-    "| $$    $$| $$  | $$| $$| $$  >$$  $$ ",
-    "|  $$$$$$/|  $$$$$$$| $$| $$ /$$/\\  $$",
-    " \\______/  \\____  $$|__/|__/|__/  \\__/",
-    "           /$$  | $$                  ",
-    "          |  $$$$$$/                  ",
-    "           \\______/                   "
-};
-
-const int LOGO_HEIGHT = 11;
-const int LOGO_WIDTH = 41;
-
-class Display {
-public:
-    static void clear_screen() {
-        for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
-            VGA_BUFFER[i] = (uint16_t)' ' | (uint16_t)(0x0F << 8);
-        }
-    }
-
-    static void write_char(char c, int x, int y) {
-        int offset = y * SCREEN_WIDTH + x;
-        VGA_BUFFER[offset] = (uint16_t)c | (uint16_t)(0x0F << 8);
-    }
-
-    static void write_string(const char* str, int x, int y) {
-        for (int i = 0; str[i] != '\0'; ++i) {
-            write_char(str[i], x + i, y);
-        }
-    }
-
-    static void display_logo() {
-        int start_x = (SCREEN_WIDTH - LOGO_WIDTH) / 2;
-        int start_y = (SCREEN_HEIGHT - LOGO_HEIGHT) / 2;
-        for (int y = 0; y < LOGO_HEIGHT; y++) {
-            for (int x = 0; x < LOGO_WIDTH; x++) {
-                write_char(CYLIX_LOGO[y][x], start_x + x, start_y + y);
-            }
-        }
-    }
-};
-
-class Shell {
-public:
-    static void run() {
-        Display::write_string("Shell not implemented yet", 0, SCREEN_HEIGHT - 1);
-    }
-};
+const uint64_t FRAME_TIME = 1;
+const uint64_t LOGO_DISPLAY_TIME = 3000;
 
 class GUI {
 public:
-    static void run() {
-        WindowManager windowManager;
-        windowManager.init();
-
-        windowManager.run();
-
-    }
+  static void run() {
+    WindowManager windowManager;
+    windowManager.init();
+    windowManager.run();
+  }
 };
 
-enum class Mode {
-    LOGO,
-    SHELL,
-    GUI
-};
+enum class Mode { LOGO, SHELL, GUI };
 
 class System {
 private:
-    Mode current_mode;
-    Timer timer;
+  Mode current_mode;
+  Timer timer;
+  uint64_t logo_start_time;
+  bool logo_displayed;
 
 public:
-    System() : current_mode(Mode::GUI) {}
+  System()
+      : current_mode(Mode::LOGO), logo_start_time(0), logo_displayed(false) {}
 
-    void update() {
-        Display::clear_screen();
-        switch (current_mode) {
-            case Mode::LOGO:
-                Display::display_logo();
-                Display::write_string("Cylix OS", (SCREEN_WIDTH - 8) / 2, SCREEN_HEIGHT - 2);
-                break;
-            case Mode::SHELL:
-                Shell::run();
-                break;
-            case Mode::GUI:
-                GUI::run();
-                break;
-        }
+  void update() {
+    Display::clear_screen();
+    switch (current_mode) {
+    case Mode::LOGO:
+      if (!logo_displayed) {
+        const char *CYLIX_LOGO[] = {"  /$$$$$$            /$$ /$$          ",
+                                    " /$$__  $$          | $$|__/          ",
+                                    "| $$  \\__/ /$$   /$$| $$ /$$ /$$   /$$",
+                                    "| $$      | $$  | $$| $$| $$|  $$ /$$/",
+                                    "| $$      | $$  | $$| $$| $$ \\  $$$$/ ",
+                                    "| $$    $$| $$  | $$| $$| $$  >$$  $$ ",
+                                    "|  $$$$$$/|  $$$$$$$| $$| $$ /$$/\\  $$",
+                                    " \\______/  \\____  $$|__/|__/|__/  \\__/",
+                                    "           /$$  | $$                  ",
+                                    "          |  $$$$$$/                  ",
+                                    "           \\______/                   "};
+        const int LOGO_HEIGHT = 11;
+        const int LOGO_WIDTH = 41;
+        Display::display_logo(CYLIX_LOGO, LOGO_HEIGHT,
+                              LOGO_WIDTH); // Display the logo
+        Display::write_string("Cylix OS", (SCREEN_WIDTH - 8) / 2,
+                              SCREEN_HEIGHT - 2);
+        logo_displayed = true;
+        logo_start_time = timer.getElapsedMs(); // Record the start time
+      }
+      break;
+    case Mode::SHELL:
+      Shell::run();
+      break;
+    case Mode::GUI:
+      GUI::run();
+      break;
     }
+    Display::swap_buffers();
+  }
 
-    void run() {
-        while (1) {
-            uint64_t elapsed_time = timer.getElapsedMs();
-            
-            if (elapsed_time >= FRAME_TIME) {
-                update();
-                timer.reset();
+  void run() {
+    Display::initialize(); // Initialize the display
+    while (true) {
+      uint64_t elapsed_time = timer.getElapsedMs();
 
-                if (elapsed_time > 5000) {
-                    current_mode = Mode::SHELL;
-                }
-            }
+      if (elapsed_time >= FRAME_TIME) {
+        update();      // Update the display
+        timer.reset(); // Reset the timer
+
+        if (current_mode == Mode::LOGO &&
+            (elapsed_time - logo_start_time) >= LOGO_DISPLAY_TIME) {
+          current_mode = Mode::SHELL; // Change to shell mode after 3 seconds
         }
+      }
     }
+  }
 };
 
 extern "C" void main() {
-    System system;
-    system.run();
+  System system;
+  system.run();
 }
